@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贪吃蛇游戏</title>
+    <style>
+        body {
+            background-color: #0a192f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(30, 20px);
+            grid-gap: 2px;
+        }
+        .cell {
+            width: 20px;
+            height: 20px;
+            background-color: #233554;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .snake {
+            background-color: #ff5f56;
+        }
+        .food {
+            background-color: #ffbd2e;
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            100% {
+                transform: scale(1.1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-board"></div>
+
+    <script>
+        // 游戏参数
+        const gridSize = 30;
+        const initialSnakeLength = 3;
+        const speed = 200;
+
+        // 游戏状态
+        let gameBoard;
+        let snake = [{ x: 10, y: 10 }];
+        let food = { x: 5, y: 5 };
+        let dx = 0;
+        let dy = 0;
+        let score = 0;
+        let gameInterval;
+
+        // 初始化游戏
+        function initializeGame() {
+            gameBoard = document.getElementById('game-board');
+            createGrid();
+            drawSnake();
+            generateFood();
+            gameInterval = setInterval(moveSnake, speed);
+
+            document.addEventListener('keydown', changeDirection);
+        }
+
+        // 创建游戏网格
+        function createGrid() {
+            for (let row = 0; row < gridSize; row++) {
+                for (let col = 0; col < gridSize; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    gameBoard.appendChild(cell);
+                }
+            }
+        }
+
+        // 绘制蛇
+        function drawSnake() {
+            gameBoard.querySelectorAll('.snake').forEach(cell => {
+                cell.classList.remove('snake');
+            });
+            snake.forEach(segment => {
+                const cellIndex = segment.x + segment.y * gridSize;
+                gameBoard.childNodes[cellIndex].classList.add('snake');
+            });
+        }
+
+        // 生成食物
+        function generateFood() {
+            const emptyCells = gameBoard.querySelectorAll('.cell:not(.snake)');
+            const randomCellIndex = Math.floor(Math.random() * emptyCells.length);
+            food = {
+                x: Math.floor(randomCellIndex % gridSize),
+                y: Math.floor(randomCellIndex / gridSize)
+            };
+            gameBoard.childNodes[randomCellIndex].classList.add('food');
+        }
+
+        // 移动蛇
+        function moveSnake() {
+            const head = {
+                x: snake[0].x + dx,
+                y: snake[0].y + dy
+            };
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                gameBoard.querySelector('.food').classList.remove('food');
+                generateFood();
+            } else {
+                snake.pop();
+            }
+
+            if (isGameOver()) {
+                clearInterval(gameInterval);
+                alert('Game Over! Your score: ' + score);
+            }
+
+            drawSnake();
+        }
+
+        // 改变蛇的移动方向
+        function changeDirection(event) {
+            const keyMap = {
+                'ArrowUp': { x: 0, y: -1 },
+                'ArrowDown': { x: 0, y: 1 },
+                'ArrowLeft': { x: -1, y: 0 },
+                'ArrowRight': { x: 1, y: 0 }
+            };
+            const newDirection = keyMap[event.key];
+            if (newDirection && isValidDirection(newDirection)) {
+                dx = newDirection.x;
+                dy = newDirection.y;
+            }
+        }
+
+        // 检查是否是有效的移动方向
+        function isValidDirection(direction) {
+            return (direction.x !== -dx || direction.y !== -dy);
+        }
+
+        // 检查游戏是否结束
+        function isGameOver() {
+            const head = snake[0];
+            return (
+                head.x < 0 || head.x >= gridSize ||
+                head.y < 0 || head.y >= gridSize ||
+                snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)
+            );
+        }
+
+        // 开始游戏
+        initializeGame();
+    </script>
+</body>
+</html>
